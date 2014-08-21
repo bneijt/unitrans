@@ -1,0 +1,59 @@
+<!doctype html>
+<html class="no-js" lang="en" ng-app="unitransApp">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Unitrans</title>
+    <script src="js/vendor/modernizr.js"></script>
+    <link rel="stylesheet" href="css/normalize.css"/>
+    <link rel="stylesheet" href="css/foundation.min.css"/>
+    <script src="js/vendor/angular.min.js"></script>
+    <script src="js/controllers.js"></script>
+    <script src="js/unitrans.js"></script>
+</head>
+<body>
+
+<div class="row">
+    <div class="large-12 columns">
+        <h1>Welcome to Unitrans</h1>
+    </div>
+</div>
+<div class="panel">
+    <div class="row">
+        <form action="/api/upload/multipart" method="post" enctype="multipart/form-data">
+            <div class="large-6 columns">
+                <input type="file" name="file" id="uploadFileInput">
+            </div>
+            <div class="large-6 columns">
+                <input type="submit" value="Upload"
+                       class="button">
+            </div>
+        </form>
+    </div>
+</div>
+<div class="row" ng-controller="FileListingController">
+    <div class="large-12 columns">
+        <h2>Files</h2>
+        <ul>
+            <li ng-repeat="metaDataBlock in metaDataBlocks">
+                {{ metaDataBlock.meta }}
+                <a ng-if="metaDataBlock.blockHashList.length > 0" href="/api/download/file/{{ metaDataBlock.id }}">Download</a>
+                <ul>
+                    {{ metaDataBlock.meta }}
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+<div class="row" ng-controller="StrangerListingController">
+    <div class="large-12 columns">
+        <h2>Strangers</h2>
+        <ul>
+            <li ng-repeat="user in strangers">
+                User {{ user }}
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
