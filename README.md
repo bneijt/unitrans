@@ -7,15 +7,22 @@ For development
 
     mvn verify exec:java
 
+Project overview
+----------------
+The project consists of a few basic ideas:
 
-Current "could be better" list
-------------------------------
+ - Data is stored in blocks and references by metadata blocks
+ - Metadata blocks can reference other blocks (including metadata blocks) and other files
+ - All blocks are stored by hash of their content
+ - All blocks are therefore immutable and never directly deleted but forgotten and garbage collected
+ - There is no access control on the data blocks
+ - There is no access control on metadata blocks
+ - Each user has a single metadata block as their root, from there all their accessible blocks are referenced
+ - Each user is authenticated by a client certificate
 
- - Corrupt metadata blocks are not removed/cleaned up yet
- - There is not check on disk usage or statistics yet
- - Is Messagepack robust against parsing invalid data?
 
 
 To test
 -------
  - Is it possible to create a recursive metadata block in the system which will generate an endless stream?
+ - Is Messagepack robust against parsing invalid data?
