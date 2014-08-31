@@ -1,5 +1,6 @@
 **Current status**: Not working yet
 
+![Travis CI build status](https://api.travis-ci.org/bneijt/unitrans.svg)
 
 Getting started
 ---------------
