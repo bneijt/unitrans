@@ -3,9 +3,10 @@ package nl.bneijt.unitrans;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import nl.bneijt.unitrans.accesscontrol.DiskMap;
+import nl.bneijt.unitrans.accesscontrol.FileDiskMap;
+import nl.bneijt.unitrans.accesscontrol.RootBlockPerUserDiskMap;
 import nl.bneijt.unitrans.blockstore.*;
 
-import javax.inject.Named;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,8 +31,8 @@ public class UnitransModule extends AbstractModule {
 
 
         try {
-            DiskMap diskMap = new DiskMap(new File(commandlineConfiguration.getRootBlockPerUserLocation()));
-            bind(DiskMap.class).annotatedWith(Names.named("rootBlockPerUser")).toInstance(diskMap);
+            RootBlockPerUserDiskMap diskMap = new RootBlockPerUserDiskMap(new File(commandlineConfiguration.getRootBlockPerUserLocation()));
+            bind(RootBlockPerUserDiskMap.class).toInstance(diskMap);
         } catch (IOException e) {
             throw new RuntimeException("Could not open root block disk map", e);
         }

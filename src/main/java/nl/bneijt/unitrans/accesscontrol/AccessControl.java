@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 
 public class AccessControl {
@@ -15,7 +14,7 @@ public class AccessControl {
     private Logger logger = LoggerFactory.getLogger(AccessControl.class);
 
     @Inject
-    public AccessControl(@Named("rootBlockPerUser") DiskMap rootMetaBlockFor, Users users) {
+    public AccessControl(RootBlockPerUserDiskMap rootMetaBlockFor, Users users) {
         this.rootMetaBlockFor = rootMetaBlockFor;
         this.users = users;
     }

@@ -53,6 +53,7 @@ public class Application {
     private final Injector injector;
     private final CanAccessFilter canAccessFilter;
     private final CommandlineConfiguration commandlineConfiguration;
+    private Server jettyServer;
 
     @Inject
     public Application(Injector injector, CanAccessFilter canAccessFilter, CommandlineConfiguration commandlineConfiguration) {
@@ -62,7 +63,7 @@ public class Application {
     }
 
 
-    public static void main(String[] args) throws IOException {
+    public static ArgumentParser argumentParser() {
         ArgumentParser parser = ArgumentParsers.newArgumentParser("unitrans")
                 .description("Unitrans server interface");
         parser.addArgument("--" + CommandlineConfiguration.BLOCKSTORE_LOCATION)
@@ -74,6 +75,11 @@ public class Application {
                 .type(Integer.class)
                 .setDefault(CommandlineConfiguration.SERVER_PORT_DEFAULT)
                 .help("The port to host the server on");
+        return parser;
+    }
+
+    public static void main(String[] args) throws IOException {
+        ArgumentParser parser = argumentParser();
 
         try {
             Namespace res = parser.parseArgs(args);
@@ -91,7 +97,7 @@ public class Application {
     public void runServer() throws IOException {
         removeProviderWith("SunPKCS11-NSS");
         ResourcesApplication resourcesApplication = injector.getInstance(ResourcesApplication.class);
-        Server jettyServer = createJettyServer(resourcesApplication);
+        jettyServer = createJettyServer(resourcesApplication);
 
         try {
             jettyServer.start();
@@ -205,5 +211,9 @@ public class Application {
         if (!new File(path).canRead()) {
             throw new IOException("Unable to read required file at '" + path + "'");
         }
+    }
+
+    public void stop() throws Exception {
+        jettyServer.stop();
     }
 }
