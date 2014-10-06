@@ -8,6 +8,11 @@ For development
 
     mvn verify exec:java
 
+**beware** this will create a blockstore location based at `<your home directory>/tmp/unitrans/blockstore`.
+
+See `mvn clean verify; java -jar target/unitrans*.jar --help` for more information.
+
+
 Project overview
 ----------------
 The project consists of a few basic ideas:
@@ -21,7 +26,9 @@ The project consists of a few basic ideas:
  - Each user has a single metadata block as their root, from there all their accessible blocks are referenced
  - Each user is authenticated by a client certificate
 
-
+Todo
+----
+Add support for URN usage (urn:<sha256>:unitrans)
 
 To test
 -------
