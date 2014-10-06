@@ -65,6 +65,7 @@ public class Application {
     public static ArgumentParser argumentParser() {
         ArgumentParser parser = ArgumentParsers.newArgumentParser("unitrans")
                 .description("Unitrans server interface");
+
         parser.addArgument("--" + CommandlineConfiguration.BLOCKSTORE_LOCATION)
                 .type(String.class)
                 .setDefault(CommandlineConfiguration.BLOCKSTORE_LOCATION_DEFAULT)
@@ -74,6 +75,12 @@ public class Application {
                 .type(Integer.class)
                 .setDefault(CommandlineConfiguration.SERVER_PORT_DEFAULT)
                 .help("The port to host the server on");
+
+        parser.addArgument("--" + CommandlineConfiguration.WEB_RESOURCES_LOCATION)
+                .type(String.class)
+                .setDefault(CommandlineConfiguration.WEB_RESOURCES_LOCATION_DEFAULT)
+                .help("Location of web resources to load. When this location does not exist, the internal webapp will be used.");
+
         return parser;
     }
 
@@ -144,7 +151,7 @@ public class Application {
         context.addServlet(jerseyServlet, "/api/*");
         context.addServlet(DefaultServlet.class, "/*");
 
-        File localResources = new File("src/main/resources/webapp/");
+        File localResources = new File(commandlineConfiguration.getWebResourcesLocation());
         if (localResources.isDirectory()) {
             logger.debug("Using resources from {}", localResources);
             context.setBaseResource(Resource.newResource(localResources));
