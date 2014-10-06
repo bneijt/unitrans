@@ -19,7 +19,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +77,7 @@ public class Application {
         return parser;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         ArgumentParser parser = argumentParser();
 
         try {
@@ -94,7 +93,21 @@ public class Application {
 
     }
 
-    public void runServer() throws IOException {
+    public void runServer() throws IOException, InterruptedException {
+        startServer();
+        joinServer();
+    }
+
+    private void joinServer() throws InterruptedException {
+        try {
+            jettyServer.join();
+        } catch (InterruptedException e) {
+            logger.warn("Server was interrupted", e);
+            throw e;
+        }
+    }
+
+    public boolean startServer() throws IOException {
         removeProviderWith("SunPKCS11-NSS");
         ResourcesApplication resourcesApplication = injector.getInstance(ResourcesApplication.class);
         jettyServer = createJettyServer(resourcesApplication);
@@ -103,14 +116,9 @@ public class Application {
             jettyServer.start();
         } catch (Exception e) {
             logger.error("Jetty server could not be started", e);
-            return;
+            return true;
         }
-
-        try {
-            jettyServer.join();
-        } catch (InterruptedException e) {
-            logger.warn("Server was interrupted", e);
-        }
+        return false;
     }
 
     private void removeProviderWith(String substringOfName) {
@@ -164,6 +172,7 @@ public class Application {
                 new SslConnectionFactory(sslContextFactory, "http/1.1"),
                 new HttpConnectionFactory(https_config));
         sslConnector.setPort(commandlineConfiguration.getServerPort());
+        logger.info("SSL connector port is {}", sslConnector.getPort());
         server.addConnector(sslConnector);
 
         server.setHandler(handlers);
@@ -213,7 +222,7 @@ public class Application {
         }
     }
 
-    public void stop() throws Exception {
+    public void stopServer() throws Exception {
         jettyServer.stop();
     }
 }
