@@ -66,6 +66,7 @@ public class MetaDataResource {
         if(rootIdentifier == null) {
             //Create a new empty root metadatablock
             MetaData emptyRootMetadata = new MetaData();
+            emptyRootMetadata.putMetaData("name", "/");
             rootIdentifier = blockStore.writeMeta(emptyRootMetadata);
             accessControl.setRootMetaBlockFor(user, rootIdentifier);
             return MetaDataElement.from(emptyRootMetadata, rootIdentifier);

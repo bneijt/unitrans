@@ -26,7 +26,7 @@ public class MetaDataElement {
 
     public static MetaDataElement from(MetaData metaData, Hash id) {
         MetaDataElement metaDataElement = new MetaDataElement(
-                id.toBase64(),
+                id.toBase16(),
                 Lists.transform(metaData.getBlockHashList(), new Function<Hash, String>() {
                     @Nullable
                     @Override
