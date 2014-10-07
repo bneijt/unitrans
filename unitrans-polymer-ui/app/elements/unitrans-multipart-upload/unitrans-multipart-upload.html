@@ -1,0 +1,27 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<polymer-element name="unitrans-multipart-upload" attributes="">
+    <template>
+        <h2>Upload file</h2>
+        <p>
+            <form action="/api/upload/multipart" method="post" enctype="multipart/form-data">
+                <div class="large-6 columns">
+                    <input type="file" name="file" id="uploadFileInput">
+                </div>
+                <div class="large-6 columns">
+                    <input type="submit" value="Upload"
+                           class="button">
+                </div>
+        </form>
+    </p>
+</template>
+<script>
+    (function () {
+        'use strict';
+
+        Polymer({
+        });
+
+    })();
+</script>
+</polymer-element>

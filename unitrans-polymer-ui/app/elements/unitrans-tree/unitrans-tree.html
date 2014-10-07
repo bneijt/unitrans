@@ -1,0 +1,29 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<polymer-element name="unitrans-tree" attributes="subnodes">
+    <template>
+        <p>File tree</p>
+        <unitrans-tree-node node="{{rootNode}}"/>
+        <core-ajax
+                   auto
+                   id="rootMetaData"
+                   url="/api/metadata/root"
+                   on-core-response="{{rootUpdated}}"
+                   handleAs="json">
+        </core-ajax>
+    </template>
+    <script>
+        (function () {
+            'use strict';
+
+            Polymer({
+                subnodes: [],
+                rootUpdated: function() {
+                    var metaData = this.$.rootMetaData.response;
+                    this.rootNode = {url: encodeURI("/api/metadata/" + metaData.id)};
+                }
+            });
+
+        })();
+    </script>
+</polymer-element>
