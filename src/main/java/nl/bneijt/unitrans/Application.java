@@ -7,14 +7,11 @@ import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 import nl.bneijt.unitrans.filter.AccessLoggingFilter;
-import nl.bneijt.unitrans.filter.CanAccessFilter;
-import nl.bneijt.unitrans.filter.X509ClientAuthenticationFilter;
-import nl.bneijt.unitrans.resources.ResourcesApplication;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import nl.bneijt.unitrans.metadata.MetadataService;
+import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.resource.Resource;
@@ -37,7 +34,6 @@ public class Application {
     static final Logger logger;
 
     static {
-        Security.addProvider(new BouncyCastleProvider());
 
         //Initialize JDK logging
         final InputStream inputStream = Application.class.getResourceAsStream("/logging.properties");
@@ -50,15 +46,15 @@ public class Application {
     }
 
     private final Injector injector;
-    private final CanAccessFilter canAccessFilter;
     private final CommandlineConfiguration commandlineConfiguration;
     private Server jettyServer;
+    private final MetadataService metadataService;
 
     @Inject
-    public Application(Injector injector, CanAccessFilter canAccessFilter, CommandlineConfiguration commandlineConfiguration) {
+    public Application(Injector injector, CommandlineConfiguration commandlineConfiguration, MetadataService metadataService) {
         this.injector = injector;
-        this.canAccessFilter = canAccessFilter;
         this.commandlineConfiguration = commandlineConfiguration;
+        this.metadataService = metadataService;
     }
 
 
@@ -66,10 +62,15 @@ public class Application {
         ArgumentParser parser = ArgumentParsers.newArgumentParser("unitrans")
                 .description("Unitrans server interface");
 
-        parser.addArgument("--" + CommandlineConfiguration.BLOCKSTORE_LOCATION)
+        parser.addArgument("--" + CommandlineConfiguration.DATA_LOCATION)
                 .type(String.class)
-                .setDefault(CommandlineConfiguration.BLOCKSTORE_LOCATION_DEFAULT)
-                .help("The location of the block storage");
+                .setDefault(CommandlineConfiguration.DATA_LOCATION_DEFAULT)
+                .help("The location of the data storage");
+
+        parser.addArgument("--" + CommandlineConfiguration.META_LOCATION)
+                .type(String.class)
+                .setDefault(CommandlineConfiguration.META_LOCATION_DEFAULT)
+                .help("The location of the metadata storage");
 
         parser.addArgument("--" + CommandlineConfiguration.SERVER_PORT)
                 .type(Integer.class)
@@ -145,8 +146,7 @@ public class Application {
         ServletHolder jerseyServlet = new ServletHolder("jersey-servlet", new ServletContainer(resourcesApplication));
 
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
-        context.addFilter(X509ClientAuthenticationFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-        context.addFilter(new FilterHolder(canAccessFilter), "/*", EnumSet.of(DispatcherType.REQUEST));
+//        context.addFilter(X509ClientAuthenticationFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
         context.addFilter(AccessLoggingFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
         context.addServlet(jerseyServlet, "/api/*");
         context.addServlet(DefaultServlet.class, "/*");
@@ -162,13 +162,12 @@ public class Application {
 
 
         HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[]{
-                context});
+        handlers.setHandlers(new Handler[]{context});
 
 
         Server server = new Server();
 
-        SslContextFactory sslContextFactory = newSslContextFactory();
+        SslContextFactory sslContextFactory = newSslContextFactory(commandlineConfiguration.getKeyStoreLocation(), commandlineConfiguration.getKeyStorePassword());
 
         // SSL HTTP Configuration
         HttpConfiguration https_config = new HttpConfiguration();
@@ -176,7 +175,7 @@ public class Application {
 
         // SSL Connector
         ServerConnector sslConnector = new ServerConnector(server,
-                new SslConnectionFactory(sslContextFactory, "http/1.1"),
+                new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
                 new HttpConnectionFactory(https_config));
         sslConnector.setPort(commandlineConfiguration.getServerPort());
         logger.info("SSL connector port is {}", sslConnector.getPort());
@@ -187,26 +186,23 @@ public class Application {
 
     }
 
-    public SslContextFactory newSslContextFactory() throws IOException {
-        String password = "G9W9hbas9cr8mc0JZP09";
+    public SslContextFactory newSslContextFactory(File keystoreLocation, String password) throws IOException {
+
+        if (!keystoreLocation.canRead()) {
+            logger.warn("Could not read keystore file, trying to generate it at {}", keystoreLocation);
+            CertificateBuilder.generateKeyStore(keystoreLocation, password);
+        }
+
         SslContextFactory sslContextFactory = new SslContextFactory();
 
-        requireFile("keys/server.jks");
-
-//        sslContextFactory.setTrustManagerFactoryAlgorithm("TrustAll");
-
         sslContextFactory.setTrustStoreType("JKS");
-        sslContextFactory.setTrustStorePath("keys/server.jks");
+        sslContextFactory.setTrustStorePath(keystoreLocation.getPath());
         sslContextFactory.setTrustStorePassword(password);
-        sslContextFactory.setTrustAll(true);
 
         sslContextFactory.setKeyStoreType("JKS");
-        sslContextFactory.setKeyStorePath("keys/server.jks");
+        sslContextFactory.setKeyStorePath(keystoreLocation.getPath());
         sslContextFactory.setKeyStorePassword(password);
         sslContextFactory.setKeyManagerPassword(password);
-
-//        sslContextFactory.setValidateCerts(false);
-//        sslContextFactory.setTrustManagerFactoryAlgorithm("TrustAll");
 
         sslContextFactory.setExcludeCipherSuites(
                 "SSL_RSA_WITH_DES_CBC_SHA",
@@ -216,20 +212,12 @@ public class Application {
                 "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
                 "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
                 "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA");
-//        sslContextFactory.setRenegotiationAllowed(true);
-//        sslContextFactory.setValidatePeerCerts(false);
-//        sslContextFactory.setWantClientAuth(true);
-        sslContextFactory.setNeedClientAuth(true);
-        return sslContextFactory;
-    }
 
-    private void requireFile(String path) throws IOException {
-        if (!new File(path).canRead()) {
-            throw new IOException("Unable to read required file at '" + path + "'");
-        }
+        return sslContextFactory;
     }
 
     public void stopServer() throws Exception {
         jettyServer.stop();
+        metadataService.close();
     }
 }

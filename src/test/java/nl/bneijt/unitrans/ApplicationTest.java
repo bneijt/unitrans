@@ -1,11 +1,17 @@
 package nl.bneijt.unitrans;
 
+import com.google.common.io.Files;
 import com.google.inject.Injector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assume.assumeThat;
 
 public class ApplicationTest {
 
@@ -13,7 +19,11 @@ public class ApplicationTest {
     public void shouldBeAbleToStartAndStopSslContextFactory() throws Exception {
         Injector injector = TestUnitransModule.createInjector();
         Application application = injector.getInstance(Application.class);
-        SslContextFactory sslContextFactory = application.newSslContextFactory();
+        File keystoreLocation = File.createTempFile("server", ".jks");
+        keystoreLocation.delete();
+        assumeThat(keystoreLocation.exists(), is(false));
+        SslContextFactory sslContextFactory = application.newSslContextFactory(keystoreLocation, "test");
+        assertThat(keystoreLocation.exists(), is(true));
         try {
             sslContextFactory.start();
             sslContextFactory.stop();
@@ -24,5 +34,7 @@ public class ApplicationTest {
             throw e;
         }
 
+
     }
+
 }

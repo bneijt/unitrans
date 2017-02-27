@@ -1,81 +1,41 @@
 package nl.bneijt.unitrans.resources;
 
-import nl.bneijt.unitrans.accesscontrol.AccessControl;
-import nl.bneijt.unitrans.accesscontrol.User;
-import nl.bneijt.unitrans.blockstore.BlockStore;
-import nl.bneijt.unitrans.blockstore.Digest;
-import nl.bneijt.unitrans.blockstore.Hash;
-import nl.bneijt.unitrans.blockstore.MetaData;
-import nl.bneijt.unitrans.resources.elements.MetaDataElement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import nl.bneijt.unitrans.metadata.MetadataService;
+import nl.bneijt.unitrans.session.SessionService;
+import nl.bneijt.unitrans.session.elements.Session;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.UUID;
 
-@Path("/metadata")
+@Path("/meta")
 public class MetaDataResource {
-    private final BlockStore blockStore;
-    private final ResourceProtection resourceProtection;
-    private final AccessControl accessControl;
 
-
-    private Logger logger = LoggerFactory.getLogger(MetaDataResource.class);
+    private final SessionService sessionService;
+    private final MetadataService metadataService;
 
     @Inject
-    public MetaDataResource(BlockStore blockStore, ResourceProtection resourceProtection, AccessControl accessControl) {
-        this.blockStore = blockStore;
-        this.resourceProtection = resourceProtection;
-        this.accessControl = accessControl;
+    public MetaDataResource(SessionService sessionService, MetadataService metadataService) {
+        this.sessionService = sessionService;
+        this.metadataService = metadataService;
     }
 
     @GET
-    @Path("{id}")
-    public Response get(@PathParam("id") String hash) throws IOException {
-        if (hash.length() != Digest.HEX_SIZE) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Wrong block hash length").build();
-        }
-        Hash blockHash = Hash.fromBase16(hash);
-        MetaData metaData = blockStore.readMeta(blockHash);
-        if (metaData != null) {
-            return Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(MetaDataElement.from(metaData, blockHash)).build();
-        } else {
-            return Response.status(Response.Status.NOT_FOUND).entity("Could not find block").build();
-        }
-    }
+    @Path("{sessionId}/{metadataId}")
+    public Response get(@PathParam("sessionId") String sessionId, @PathParam("metadataId") String metadataId) throws IOException {
+        UUID metaIdent = UUID.fromString(metadataId);
+        UUID sessionIdent = UUID.fromString(sessionId);
+        Session session = sessionService.get(sessionIdent).get();
 
-    @GET
-    @Path("root")
-    public Response get(@Context HttpServletRequest request) throws IOException {
-        User user = resourceProtection.getUser(request);
-
-        MetaDataElement metaDataElement = getOrEmptyRootMetadataBlock(user);
-
-        return Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(metaDataElement).build();
-    }
-
-    private MetaDataElement getOrEmptyRootMetadataBlock(User user) throws IOException {
-        Hash rootIdentifier = accessControl.getRootMetaBlockFor(user);
-        if(rootIdentifier == null) {
-            //Create a new empty root metadatablock
-            MetaData emptyRootMetadata = new MetaData();
-            emptyRootMetadata.putMetaData("name", "/");
-            rootIdentifier = blockStore.writeMeta(emptyRootMetadata);
-            accessControl.setRootMetaBlockFor(user, rootIdentifier);
-            return MetaDataElement.from(emptyRootMetadata, rootIdentifier);
-        } else {
-            MetaData metaData = blockStore.readMeta(rootIdentifier);
-            return MetaDataElement.from(metaData, rootIdentifier);
+        if (metadataService.reachableFrom(session.rootBlock, metaIdent)) {
+            return Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(metadataService.get(metaIdent)).build();
         }
 
-
+        return Response.status(Response.Status.UNAUTHORIZED).entity("Could not reach block").build();
     }
-
 }

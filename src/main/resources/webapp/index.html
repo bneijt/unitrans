@@ -1,88 +1,10 @@
-<!doctype html>
-<html class="no-js" lang="en" ng-app="unitransApp">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Unitrans</title>
-    <script src="js/vendor/modernizr.js"></script>
-    <link rel="stylesheet" href="css/normalize.css"/>
-    <link rel="stylesheet" href="css/foundation.min.css"/>
-    <link rel="stylesheet" href="css/font-awesome.min.css"/>
-    <script src="js/vendor/angular.min.js"></script>
-    <script src="js/controllers.js"></script>
-    <script src="js/unitrans.js"></script>
-
-
-    <link rel="stylesheet" href="css/angular-ui-tree.min.css">
-    <script type="text/javascript" src="js/vendor/angular-ui-tree.min.js"></script>
-</head>
+    <meta charset="utf-8">
+    <title>Unitrans</title></head>
 <body>
-
-<div class="row">
-    <div class="large-12 columns">
-        <h1>Welcome to Unitrans</h1>
-    </div>
-</div>
-<div class="panel">
-    <div class="row">
-        <form action="/api/upload/multipart" method="post" enctype="multipart/form-data">
-            <div class="large-6 columns">
-                <input type="file" name="file" id="uploadFileInput">
-            </div>
-            <div class="large-6 columns">
-                <input type="submit" value="Upload"
-                       class="button">
-            </div>
-        </form>
-    </div>
-</div>
-<div class="row" ng-controller="FileListingController">
-    <div class="large-12 columns">
-        <h2>Files</h2>
-        <ul>
-            <li ng-repeat="metaDataBlock in metaDataBlocks">
-                {{ metaDataBlock.meta }}
-                <a ng-if="metaDataBlock.blockHashList.length > 0" href="/api/download/file/{{ metaDataBlock.id }}">Download</a>
-                <ul>
-                    {{ metaDataBlock.meta }}  <i class="fa fa-camera-retro"></i> fa-camera-retro
-                </ul>
-            </li>
-        </ul>
-    </div>
-
-
-    <!-- Nested list template -->
-    <script type="text/ng-template" id="items_renderer.html">
-        <div ui-tree-handle>
-            <a class="button tiny" data-nodrag ng-click="toggle(this)"><span class="glyphicon"
-                                                                                        ng-class="{'glyphicon-chevron-right': collapsed, 'glyphicon-chevron-down': !collapsed}"></span></a>
-            {{item.title}}
-            <a class="pull-right btn btn-danger btn-xs" data-nodrag ng-click="remove(this)"><span
-                    class="glyphicon glyphicon-remove"></span></a>
-            <a class="pull-right btn btn-primary btn-xs" data-nodrag ng-click="newSubItem(this)"
-               style="margin-right: 8px;"><span class="glyphicon glyphicon-plus"></span></a>
-        </div>
-        <ol ui-tree-nodes="options" ng-model="item.items" ng-class="{hidden: collapsed}">
-            <li ng-repeat="item in item.items" ui-tree-node ng-include="'items_renderer.html'">
-            </li>
-        </ol>
-    </script>
-    <div ui-tree="options" data-drag-enabled="false">
-        <ol ui-tree-nodes ng-model="metaDataTree">
-            <li ng-repeat="item in metaDataTree" ui-tree-node ng-include="'items_renderer.html'"></li>
-        </ol>
-    </div>
-
-</div>
-<div class="row" ng-controller="StrangerListingController">
-    <div class="large-12 columns">
-        <h2>Strangers</h2>
-        <ul>
-            <li ng-repeat="user in strangers">
-                User {{ user }}
-            </li>
-        </ul>
-    </div>
-</div>
+    <h1>Unitrans</h1>
+    <p>Great... now find a client to talk to this server</p>
 </body>
 </html>
