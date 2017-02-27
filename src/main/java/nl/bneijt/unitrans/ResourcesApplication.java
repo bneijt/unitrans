@@ -13,7 +13,7 @@ public class ResourcesApplication extends ResourceConfig {
 
     @Inject
     public ResourcesApplication(DataResource dataResource,
-                                MetaDataResource metaDataResource,
+                                MetadataResource metadataResource,
                                 SessionResource sessionResource,
                                 UserResource userResource
                                 ) {
@@ -35,7 +35,7 @@ public class ResourcesApplication extends ResourceConfig {
         //injected resources
         register(userResource);
         register(dataResource);
-        register(metaDataResource);
+        register(metadataResource);
         register(sessionResource);
     }
 

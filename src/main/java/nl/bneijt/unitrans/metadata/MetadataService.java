@@ -4,14 +4,21 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import nl.bneijt.unitrans.metadata.elements.MetadataBlock;
 import nl.bneijt.unitrans.metadata.elements.User;
+import org.slf4j.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 @Singleton
 public class MetadataService implements Closeable {
+final static Logger LOGGER = getLogger(MetadataService.class);
+
+
     private final Neo4JStorage neo4JStorage;
 
     @Inject
@@ -61,12 +68,33 @@ public class MetadataService implements Closeable {
         return UUID.randomUUID();
     }
 
-    public User getUser(String username, String password) {
-        return neo4JStorage.getUser(username, password).get();
-    }
+    /** Get user information, or fail if the password is incorrect
+     *
+     * @param username
+     * @param password
+     * @return user if the user exists and the password is correct
+     */
+    public Optional<User> getUser(String username, String password) {
+        return neo4JStorage.getUser(username, password);
+       }
 
-    public User addUser(String username, String password) {
-        return neo4JStorage.addUser(username, password).get();
+    /**
+     * Add the user with the given username and password.
+     * @param username
+     * @param password
+     * @return The new user or empty if the user already existed
+     */
+    public Optional<User> addUser(String username, String password) {
+        //Check if the user already exists
+        if(neo4JStorage.hasUser(username)) {
+            return Optional.empty();
+        };
+
+
+
+        MetadataBlock rootBlock = MetadataBlock.emptyRandomBlock();
+        neo4JStorage.createOrIgnore(rootBlock);
+        return neo4JStorage.addUser(username, password, rootBlock);
     }
 
 

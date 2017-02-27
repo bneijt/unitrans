@@ -14,20 +14,22 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Path("/meta")
-public class MetaDataResource {
+public class MetadataResource {
 
     private final SessionService sessionService;
     private final MetadataService metadataService;
 
     @Inject
-    public MetaDataResource(SessionService sessionService, MetadataService metadataService) {
+    public MetadataResource(SessionService sessionService, MetadataService metadataService) {
         this.sessionService = sessionService;
         this.metadataService = metadataService;
     }
 
     @GET
     @Path("{sessionId}/{metadataId}")
-    public Response get(@PathParam("sessionId") String sessionId, @PathParam("metadataId") String metadataId) throws IOException {
+    public Response get(@PathParam("sessionId") String sessionId,
+                        @PathParam("metadataId") String metadataId) throws IOException {
+
         UUID metaIdent = UUID.fromString(metadataId);
         UUID sessionIdent = UUID.fromString(sessionId);
         Session session = sessionService.get(sessionIdent).get();
@@ -35,7 +37,6 @@ public class MetaDataResource {
         if (metadataService.reachableFrom(session.rootBlock, metaIdent)) {
             return Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(metadataService.get(metaIdent)).build();
         }
-
-        return Response.status(Response.Status.UNAUTHORIZED).entity("Could not reach block").build();
+        return JsonResponse.unauthorized("Could not reach block");
     }
 }

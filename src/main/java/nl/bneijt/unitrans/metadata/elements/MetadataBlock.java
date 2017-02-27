@@ -2,6 +2,7 @@ package nl.bneijt.unitrans.metadata.elements;
 
 import com.google.common.collect.Lists;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,5 +22,9 @@ public class MetadataBlock {
         this.ident = UUID.randomUUID();
         this.metas = Lists.newArrayList(other.metas);
         this.datas = Lists.newArrayList(other.datas);
+    }
+
+    public static MetadataBlock emptyRandomBlock() {
+        return new MetadataBlock(UUID.randomUUID(), Collections.emptyList(), Collections.emptyList());
     }
 }

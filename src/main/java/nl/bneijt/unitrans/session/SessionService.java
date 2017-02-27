@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class SessionService {
 
-    private ConcurrentHashMap<String, Session> sessions;
+    private ConcurrentHashMap<String, Session> sessions = new ConcurrentHashMap<>();
 
     public Optional<Session> get(UUID sessionId) {
         String sessionIdString = sessionId.toString();

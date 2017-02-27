@@ -24,15 +24,16 @@ public class Neo4JStorage {
     private Label metadataLabel = Label.label("metadata");
     private final File basePath;
 
+
+
     public enum UnitransRelationshipTypes implements RelationshipType {
-        CHILD_ELEMENT
+        CHILD_ELEMENT;
     }
-
-
     @Inject
     public Neo4JStorage(File basePath) {
         this.basePath = basePath;
     }
+
 
     public void open() {
         basePath.getParentFile().mkdirs();
@@ -59,12 +60,12 @@ public class Neo4JStorage {
         }
     }
 
-    public Optional<User> addUser(String username, String plainPassword) {
+    public Optional<User> addUser(String username, String plainPassword, MetadataBlock rootBlock) {
         try (Transaction tx = graphDb.beginTx()) {
             Node userNode = graphDb.createNode(userLabel);
             userNode.setProperty("username", username);
             userNode.setProperty("password", BCrypt.hashpw(plainPassword, BCrypt.gensalt()));
-            userNode.setProperty("roots", new String[]{});
+            userNode.setProperty("roots", new String[]{rootBlock.ident.toString()});
             tx.success();
         }
         return getUser(username, plainPassword);
@@ -85,6 +86,14 @@ public class Neo4JStorage {
             } else {
                 return Optional.empty();
             }
+        }
+    }
+
+    public boolean hasUser(String username) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node userNode = graphDb.findNode(userLabel, "username", username);
+            tx.success();
+            return userNode != null;
         }
     }
 
@@ -147,7 +156,7 @@ public class Neo4JStorage {
      */
     public static void copyProperties(MetadataBlock block, Node node) {
         node.setProperty("ident", block.ident.toString());
-        node.setProperty("metas", block.metas.stream().map(x -> x.toString()).toArray());
-        node.setProperty("datas", block.datas.toArray());
+        node.setProperty("metas", Lists.transform(block.metas, UUID::toString).toArray(new String[]{}));
+        node.setProperty("datas", block.datas.toArray(new String[]{}));
     }
 }
