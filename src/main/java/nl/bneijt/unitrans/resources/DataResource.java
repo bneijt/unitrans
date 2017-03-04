@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.UUID;
 
 @Path("/data")
@@ -50,8 +51,9 @@ public class DataResource {
             MetadataBlock targetBlock = metadataService.get(metaIdent);
             MetadataBlock newTargetBlock = blockService.appendData(targetBlock, inputStream);
 
-            UUID newRoot = metadataService.reRoot(session.username, targetBlock, newTargetBlock);
-            Session newSession = sessionService.reRoot(session, newRoot);
+            List<MetadataBlock> newBlocks = metadataService.reRoot(session.rootBlock, targetBlock, newTargetBlock);
+            metadataService.write(newBlocks);
+            Session newSession = sessionService.reRoot(session, newBlocks.get(newBlocks.size() -1).ident);
 
             return Response.temporaryRedirect(new URI( "../" + newSession.ident.toString() + "/" + session.rootBlock.toString())).build();
 

@@ -1,12 +1,16 @@
 package nl.bneijt.unitrans.metadata;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import nl.bneijt.unitrans.metadata.elements.MetadataBlock;
 import nl.bneijt.unitrans.metadata.elements.User;
+
+
 import org.mindrot.jbcrypt.BCrypt;
+import org.neo4j.graphalgo.impl.util.PathImpl;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.IndexDefinition;
@@ -25,10 +29,10 @@ public class Neo4JStorage {
     private final File basePath;
 
 
-
     public enum UnitransRelationshipTypes implements RelationshipType {
         CHILD_ELEMENT;
     }
+
     @Inject
     public Neo4JStorage(File basePath) {
         this.basePath = basePath;
@@ -118,6 +122,34 @@ public class Neo4JStorage {
             ));
         }
 
+    }
+
+    /** List all paths from a to b
+     * Current maximum depth is 1024 elements!
+     * @param a
+     * @param b
+     * @return list of possible paths from a to b
+     */
+    public List<List<UUID>> pathsFromTo(UUID a, UUID b) {
+        List<List<UUID>> paths = new ArrayList<>();
+        try (Transaction tx = graphDb.beginTx()) {
+            Result result = graphDb.execute("MATCH p=(a)-[e*1..1024]->(b)\n" +
+                            "WHERE a.ident = {identA} AND b.ident = {identB}\n" +
+                            "RETURN a.ident,p,b.ident"
+                    , ImmutableMap.of("identA", a.toString(), "identB", b.toString()));
+            while (result.hasNext()) {
+                Map<String, Object> resultElement = result.next();
+                System.out.println(resultElement);
+//                PathImpl p = (PathImpl) resultElement.get("p");
+//                System.out.println(p);
+                paths.add(Arrays.asList(
+                        UUID.fromString((String) resultElement.get("a.ident")),
+                        UUID.fromString((String) resultElement.get("b.ident"))
+                ));
+            }
+            tx.success();
+        }
+        return paths;
     }
 
     private List<UUID> readMetasFrom(Node node, String propertyKey) {

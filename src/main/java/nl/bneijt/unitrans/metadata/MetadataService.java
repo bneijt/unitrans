@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,8 +33,11 @@ final static Logger LOGGER = getLogger(MetadataService.class);
 
 
     synchronized public boolean reachableFrom(UUID rootBlock, UUID metaIdent) {
-        //TODO
-        return true;
+        if(rootBlock.equals(metaIdent)) {
+            return true;
+        }
+        List<List<UUID>> paths = neo4JStorage.pathsFromTo(rootBlock, metaIdent);
+        return paths.size() > 0;
     }
 
     public MetadataBlock appendMetadata(MetadataBlock targetBlock, MetadataBlock blockToAppend) {
@@ -56,16 +60,18 @@ final static Logger LOGGER = getLogger(MetadataService.class);
     /** Generate a new root path given that targetBlock should be replaced by newTargetBlock
      *
      *
-     * @param username
+     * @param rootBlockIdent
      * @param targetBlock
      * @param newTargetBlock
-     * @return the uuid of the new root
+     * @return the new blocks required to create the new path, including the newly elected root block as last element of the list
      */
-    public UUID reRoot(String username, MetadataBlock targetBlock, MetadataBlock newTargetBlock) {
-        //Find all references to targetBlock and update them to point to newTargetBlock
+    public List<MetadataBlock> reRoot(UUID rootBlockIdent, MetadataBlock targetBlock, MetadataBlock newTargetBlock) {
+        //Find all references to targetBlock and create new blocks restoring the original path to the user's root
+        // block
+        neo4JStorage.pathsFromTo(rootBlockIdent, targetBlock.ident);
         //For all those references, do the same??
-
-        return UUID.randomUUID();
+        //LAST BLOCK MUST BE THE NEW ROOT
+        return Arrays.asList(MetadataBlock.emptyRandomBlock());
     }
 
     /** Get user information, or fail if the password is incorrect

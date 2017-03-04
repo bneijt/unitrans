@@ -54,6 +54,14 @@ Access to metadata
 The `session id` gives access to the root metadata block, which verifies access to the `metadata uuid`.
 The data is returned as a JSON object.
 
+Add new metadata
+--------
+
+    meta/<session key>/metadata uuid>/append
+
+POST a JSON object with metadata to be added to the given metadata block.
+Once posted your current session will be rerooted to the new metadata block.
+
 Access to data
 ----
 

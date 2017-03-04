@@ -2,6 +2,7 @@ package nl.bneijt.unitrans.metadata;
 
 
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import nl.bneijt.unitrans.metadata.elements.MetadataBlock;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -24,19 +25,17 @@ public class Neo4JStorageTest {
 
     @Test
     public void shouldOpenAndClose() throws Exception {
-        File testStorageLocation = File.createTempFile("testStorage", "neo");
-        assertThat(testStorageLocation.delete(), is(true));
+        File testStorageLocation = Files.createTempDir();
 
         Neo4JStorage neo4JStorage = new Neo4JStorage(testStorageLocation);
 
-        assertThat(testStorageLocation.exists(), is(false));
+
         neo4JStorage.open();
         assertThat(testStorageLocation.exists(), is(true));
         neo4JStorage.close();
         assertThat(testStorageLocation.exists(), is(true));
         FileUtils.deleteDirectory(testStorageLocation);
     }
-
 
     @Test
     public void shouldSetPropertiesOnNode() throws Exception {

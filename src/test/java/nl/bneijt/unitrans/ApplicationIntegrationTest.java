@@ -13,25 +13,20 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
 import javax.ws.rs.core.Response;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ApplicationIntegrationTest {
@@ -93,21 +88,55 @@ public class ApplicationIntegrationTest {
     }
 
     @Test
-    public void shouldHandleUserLoginFlow() throws Exception {
+    public void shouldHandleGreenFlow() throws Exception {
         String testUsername = "test";
         String testPassword = "testpass";
         String rootblock = createUser(testUsername, testPassword);
 
-        createSessionExpectingRootblock(testUsername, testPassword, rootblock);
+        UUID sessionId = createSessionExpectingRootblock(testUsername, testPassword, rootblock);
+
+        //Add new metablock
+        HttpResponse<JsonNode> response = Unirest
+                .post(baseUrl + "api/meta/" + sessionId.toString() + "/" + rootblock + "/append")
+                .body("{}")
+                .asJson();
+
 
     }
 
-    private void createSessionExpectingRootblock(String username, String password, String rootBlockIdent) throws Exception {
+
+     @Test
+     public void shouldFailToLogInWithWrongPassword() throws Exception {
+         String testUsername = "a";
+         String testPassword = "b";
+         String rootblock = createUser(testUsername, testPassword);
+
+         assertThat(true, is(true));
+         HttpResponse<String> response = Unirest.post(baseUrl + "api/session/new")
+                 .field("username", "a")
+                 .field("password", "c")
+                 .asString();
+         assertThat(response.getStatus(), is(Response.Status.UNAUTHORIZED.getStatusCode()));
+     }
+
+
+     @Test
+     public void shouldFailToLogInWithWrongUsername() throws Exception {
+         HttpResponse<String> response = Unirest.post(baseUrl + "api/session/new")
+                 .field("username", "404")
+                 .field("password", "anything")
+                 .asString();
+         assertThat(response.getStatus(), is(Response.Status.UNAUTHORIZED.getStatusCode()));
+     }
+
+
+    private UUID createSessionExpectingRootblock(String username, String password, String rootBlockIdent) throws Exception {
         //Creating a new session should create a first block
         HttpResponse<String> response = Unirest.post(baseUrl + "api/session/new")
                 .field("username", username)
                 .field("password", password)
                 .asString();
+
         assertThat(response.getStatus(), is(Response.Status.SEE_OTHER.getStatusCode()));
 
         String newSessionLocation = response.getHeaders().get("Location").get(0);
@@ -120,10 +149,21 @@ public class ApplicationIntegrationTest {
 
         String rootBlockForSessionLocation = sessionRedirect.getHeaders().get("Location").get(0);
 
-        HttpResponse<JsonNode> rootBlock = Unirest.get(rootBlockForSessionLocation).asJson();
+        String[] split = rootBlockForSessionLocation.split("/");
 
+        //Last two elements should be an UUID
+        UUID.fromString(split[split.length -1]);
+        UUID sessionId = UUID.fromString(split[split.length - 2]);
+
+
+        HttpResponse<JsonNode> rootBlock = Unirest.get(rootBlockForSessionLocation).asJson();
         assertThat(rootBlock.getStatus(), is(Response.Status.OK.getStatusCode()));
 
+        JSONObject metaBlock = rootBlock.getBody().getObject();
+        assertThat("Should not have any other files yet", metaBlock.getJSONArray("metas").length(), is(0));
+        assertThat("Should have the right ident", metaBlock.getString("ident"), is(rootBlockIdent));
+        assertThat("Should have no data connected yet", metaBlock.getJSONArray("datas").length(), is(0));
+        return sessionId;
     }
 
     private String createUser(String username, String password) throws UnirestException {
@@ -134,7 +174,7 @@ public class ApplicationIntegrationTest {
 
         assertThat(response.getStatus(), is(Response.Status.OK.getStatusCode()));
         JSONObject jsonObject = response.getBody().getObject();
-        assertThat(jsonObject.get("username"), is("test"));
+        assertThat(jsonObject.get("username"), is(username));
         assertThat("Should automatically get a new root block", jsonObject.getJSONArray("rootMetadataBlocks").length(), is(1));
         return jsonObject.getJSONArray("rootMetadataBlocks").getString(0);
     }

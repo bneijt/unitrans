@@ -54,7 +54,12 @@ public class SessionResource {
                           @FormParam("password") String password) throws IOException, URISyntaxException {
         LOGGER.info("Login for username {}", username);
 
-        User user = metadataService.getUser(username, password).get();
+        Optional<User> userOptional = metadataService.getUser(username, password);
+        if(!userOptional.isPresent()) {
+            return JsonResponse.unauthorized("Username or password incorrect");
+        }
+
+        User user = userOptional.get();
 
         Session session = sessionService.open(user.username, user.rootMetadataBlocks.get(0));
 
