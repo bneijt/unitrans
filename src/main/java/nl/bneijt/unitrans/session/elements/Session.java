@@ -15,6 +15,12 @@ public class Session {
         this.rootBlock = rootBlock;
     }
 
+    public Session(Session old, UUID newRootBlock) {
+        ident = old.ident;
+        username = old.username;
+        rootBlock = newRootBlock;
+    }
+
     //TODO Timeout and remote IP management
     // DateTime started;
     // String remoteHostAddress

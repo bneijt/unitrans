@@ -18,15 +18,20 @@ import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.neo4j.helpers.collection.Iterables;
 
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.core.Response;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ApplicationIntegrationTest {
@@ -85,6 +90,7 @@ public class ApplicationIntegrationTest {
     @Test
     public void shouldHostManifestInformation() throws Exception {
         HttpResponse<JsonNode> response = Unirest.get(baseUrl + "api/manifest.json").asJson();
+        assertThat(response.getBody().getObject().has("Manifest-Version"), is(true));
     }
 
     @Test
@@ -100,8 +106,21 @@ public class ApplicationIntegrationTest {
                 .post(baseUrl + "api/meta/" + sessionId.toString() + "/" + rootblock + "/append")
                 .body("{}")
                 .asJson();
+        //The response is a redirect to the newly created block
+        assertThat(response.getStatus(), is(Response.Status.SEE_OTHER.getStatusCode()));
+        String newMetadataBlockLocation = response.getHeaders().get("Location").get(0);
+        List<String> split = Arrays.asList(newMetadataBlockLocation.split("/"));
+
+        String newRootBlock = Iterables.fromEnd(split, 1);
+        String sameSession = Iterables.fromEnd(split, 2);
+
+        assertThat("Same session is valid", sameSession, is(sessionId.toString()));
+        assertThat("Must have rerooted", newRootBlock, not(is(rootblock)));
+        UUID.fromString(Iterables.last(split));
 
 
+
+        System.out.println(newMetadataBlockLocation);
     }
 
 

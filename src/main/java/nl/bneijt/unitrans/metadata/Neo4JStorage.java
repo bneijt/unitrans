@@ -135,17 +135,16 @@ public class Neo4JStorage {
         try (Transaction tx = graphDb.beginTx()) {
             Result result = graphDb.execute("MATCH p=(a)-[e*1..1024]->(b)\n" +
                             "WHERE a.ident = {identA} AND b.ident = {identB}\n" +
-                            "RETURN a.ident,p,b.ident"
+                            "RETURN extract(n IN nodes(p) | n.ident) as path"
                     , ImmutableMap.of("identA", a.toString(), "identB", b.toString()));
             while (result.hasNext()) {
                 Map<String, Object> resultElement = result.next();
-                System.out.println(resultElement);
-//                PathImpl p = (PathImpl) resultElement.get("p");
-//                System.out.println(p);
-                paths.add(Arrays.asList(
-                        UUID.fromString((String) resultElement.get("a.ident")),
-                        UUID.fromString((String) resultElement.get("b.ident"))
-                ));
+                List<String> path = (List<String>) resultElement.get("path");
+                try {
+                    paths.add(Lists.transform(path, UUID::fromString));
+                } catch (IllegalArgumentException ia) {
+                    throw new IllegalArgumentException("Your metadata is corrupt", ia);
+                }
             }
             tx.success();
         }

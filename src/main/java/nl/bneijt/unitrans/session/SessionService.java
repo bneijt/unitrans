@@ -37,6 +37,12 @@ public class SessionService {
     }
 
     public Session reRoot(Session current, UUID rootBlock) {
-        return open(current.username, rootBlock);
+        Session newSession = new Session(current, rootBlock);
+        sessions.put(newSession.ident.toString(), newSession);
+        return newSession;
+    }
+
+    public void close(Session session) {
+        sessions.remove(session.ident);
     }
 }

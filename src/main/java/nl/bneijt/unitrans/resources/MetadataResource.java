@@ -1,5 +1,6 @@
 package nl.bneijt.unitrans.resources;
 
+import com.google.common.collect.Iterables;
 import nl.bneijt.unitrans.metadata.MetadataService;
 import nl.bneijt.unitrans.metadata.elements.MetadataBlock;
 import nl.bneijt.unitrans.session.SessionService;
@@ -15,6 +16,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.UUID;
 
 @Path("/meta")
@@ -59,10 +61,14 @@ public class MetadataResource {
         MetadataBlock targetBlock = metadataService.get(metaIdent);
         MetadataBlock newMetadataBlock = MetadataBlock.emptyRandomBlock();
         //TODO Read JSON post body for properties to add to the metadata block
-        metadataService.appendMetadata(targetBlock, newMetadataBlock);
+        MetadataBlock newTargetBlock = metadataService.appendMetadata(targetBlock, newMetadataBlock);
 
-        //Reroot session???
-        return Response.seeOther(new URI("session/" + session.ident.toString())).build();
+        List<MetadataBlock> newBlocksLeadingToNewRoot = metadataService.reRoot(session.rootBlock, targetBlock, newMetadataBlock);
+        metadataService.write(newBlocksLeadingToNewRoot);
+        session = sessionService.reRoot(session, Iterables.getLast(newBlocksLeadingToNewRoot).ident);
+
+        //On to the new metadata block in the new session
+        return Response.seeOther(new URI(session.ident.toString() + "/" + session.rootBlock + "/" + newTargetBlock.ident.toString())).build();
 
     }
 
