@@ -68,7 +68,7 @@ public class MetadataResource {
         session = sessionService.reRoot(session, Iterables.getLast(newBlocksLeadingToNewRoot).ident);
 
         //On to the new metadata block in the new session
-        return Response.seeOther(new URI(session.ident.toString() + "/" + session.rootBlock + "/" + newTargetBlock.ident.toString())).build();
+        return Response.seeOther(new URI(session.ident.toString() + "/" + newMetadataBlock.ident.toString())).build();
 
     }
 

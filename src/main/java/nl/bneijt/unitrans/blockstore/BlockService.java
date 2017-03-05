@@ -34,7 +34,7 @@ public class BlockService {
      * @throws IOException
      */
     public MetadataBlock appendData(MetadataBlock targetMetaBlock, InputStream inputStream) throws IOException {
-        HashFunction hf = Hashing.sha1();
+        HashFunction hf = dataHashFunction();
         HashingInputStream hashingInputStream = new HashingInputStream(hf, inputStream);
         File tempFile = File.createTempFile("incoming", ".blk");
         try (FileOutputStream tempFileOutputStream = new FileOutputStream(tempFile)) {
@@ -50,5 +50,9 @@ public class BlockService {
         MetadataBlock newMeta = new MetadataBlock(targetMetaBlock);
         newMeta.datas.add(hash.toString());
         return newMeta;
+    }
+
+    static public HashFunction dataHashFunction() {
+        return Hashing.sha1();
     }
 }

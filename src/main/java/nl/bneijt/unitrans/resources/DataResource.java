@@ -55,7 +55,7 @@ public class DataResource {
             metadataService.write(newBlocks);
             Session newSession = sessionService.reRoot(session, newBlocks.get(newBlocks.size() -1).ident);
 
-            return Response.temporaryRedirect(new URI( "../" + newSession.ident.toString() + "/" + session.rootBlock.toString())).build();
+            return Response.seeOther(new URI( "../" + newSession.ident.toString() + "/" + session.rootBlock.toString())).build();
 
         }
         return Response.status(Response.Status.UNAUTHORIZED).entity("Could not reach block").build();
