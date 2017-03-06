@@ -68,7 +68,7 @@ public class DataResource {
 
     @GET
     @Path("{sessionId}/{metadataId}/{datablockId}")
-    public Response get(@PathParam("sessionId") String sessionId,
+    public Response getBlock(@PathParam("sessionId") String sessionId,
                         @PathParam("metadataId") String metadataId,
                         @PathParam("datablockId") String datablockId) throws IOException {
         UUID metaIdent = UUID.fromString(metadataId);
