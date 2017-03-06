@@ -150,8 +150,9 @@ public class TestClient {
         String newMetadataBlockLocation = response.getHeaders().get("Location").get(0);
         List<String> split = Arrays.asList(newMetadataBlockLocation.split("/"));
 
-        String newBlock = Iterables.fromEnd(split, 1);
-        String sameSession = Iterables.fromEnd(split, 2);
+        String newBlock = Iterables.last(split);
+        String sameSession = Iterables.fromEnd(split, 1);
+        assertThat(sameSession, is(session.toString()));
         return UUID.fromString(newBlock);
 
     }

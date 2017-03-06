@@ -9,14 +9,15 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import nl.bneijt.unitrans.metadata.elements.MetadataBlock;
+import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 
 public class BlockService {
+    final static Logger LOGGER = getLogger(BlockService.class);
 
     final HashDirectoryTree hashDirectoryTree;
 
@@ -39,12 +40,14 @@ public class BlockService {
         File tempFile = File.createTempFile("incoming", ".blk");
         try (FileOutputStream tempFileOutputStream = new FileOutputStream(tempFile)) {
             ByteStreams.copy(hashingInputStream, tempFileOutputStream);
+            tempFileOutputStream.flush();
         }
         hashingInputStream.close();
         HashCode hash = hashingInputStream.hash();
 
-        File blockLocation = hashDirectoryTree.locationFor(hash);
+        File blockLocation = hashDirectoryTree.locationFor(hash.toString());
         blockLocation.getParentFile().mkdirs();
+        LOGGER.info("Adding data block at {}", blockLocation);
         Files.move(tempFile, blockLocation);
 
         MetadataBlock newMeta = new MetadataBlock(targetMetaBlock);
@@ -54,5 +57,9 @@ public class BlockService {
 
     static public HashFunction dataHashFunction() {
         return Hashing.sha1();
+    }
+
+    public InputStream open(String datablockId) throws FileNotFoundException {
+        return new FileInputStream(hashDirectoryTree.locationFor(datablockId));
     }
 }

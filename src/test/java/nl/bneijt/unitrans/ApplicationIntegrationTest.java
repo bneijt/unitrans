@@ -4,6 +4,7 @@ import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.mashape.unirest.http.HttpResponse;
@@ -33,7 +34,12 @@ public class ApplicationIntegrationTest {
     @BeforeClass
     public static void startServer() throws Exception {
         ArgumentParser parser = Application.argumentParser();
-        Namespace res = parser.parseArgs(new String[]{"--meta", "/tmp/untrans_test_meta", "--data", "/tmp/untrans_test_data"});
+        ;
+
+        Namespace res = parser.parseArgs(new String[]{
+                "--meta", Files.createTempDir().toString(),
+                "--data", Files.createTempDir().toString()
+        });
         commandlineConfiguration = new CommandlineConfiguration(res);
 
         Injector injector = Guice.createInjector(new UnitransModule(commandlineConfiguration));
@@ -86,12 +92,23 @@ public class ApplicationIntegrationTest {
         UUID blockB = client.appendMetaBlock(rootBlockForNewUser);
         //Add yet another block
         UUID blockC = client.appendMetaBlock(blockB);
-        String value = "Simple text";
-        HashCode dataHashCode = BlockService.dataHashFunction().newHasher().putString(value, Charsets.UTF_8).hash();
+        String simpleText = "Simple text";
+        HashCode simpleTextHashCode = BlockService.dataHashFunction().newHasher().putString(simpleText, Charsets.UTF_8).hash();
 
-        UUID blockD = client.appendDataString(blockC, value);
-        //String string = client.readDataString(blockD, dataHashCode.toString());
-        //TODO assertThat(string, is(value));
+        UUID blockD = client.appendDataString(blockC, simpleText);
+        String string = client.readDataString(blockD, simpleTextHashCode.toString());
+        assertThat(string, is(simpleText));
+
+        //Adding a second text to the same block
+
+        String otherText = "Other text";
+        HashCode otherTextHashCode = BlockService.dataHashFunction().newHasher().putString(otherText, Charsets.UTF_8).hash();
+        UUID blockE = client.appendDataString(blockD, otherText);
+        assertThat(client.readDataString(blockE, simpleTextHashCode.toString()), is(simpleText));
+        assertThat(client.readDataString(blockE, otherTextHashCode.toString()), is(otherText));
+
+
+
     }
 
 

@@ -1,7 +1,6 @@
 package nl.bneijt.unitrans.blockstore;
 
 import com.google.common.base.Splitter;
-import com.google.common.hash.HashCode;
 
 import java.io.File;
 
@@ -13,8 +12,10 @@ public class HashDirectoryTree {
         this.basePath = basePath;
     }
 
-    public File locationFor(HashCode hash) {
-        Iterable<String> identifierElements = blockNameSplitter.split(hash.toString());
+
+
+    public File locationFor(String hash) {
+        Iterable<String> identifierElements = blockNameSplitter.split(hash);
         File location = basePath;
         for (String identifierElement : identifierElements) {
             location = new File(location, identifierElement);
