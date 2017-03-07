@@ -107,7 +107,8 @@ public class ApplicationIntegrationTest {
         assertThat(client.readDataString(blockE, simpleTextHashCode.toString()), is(simpleText));
         assertThat(client.readDataString(blockE, otherTextHashCode.toString()), is(otherText));
 
-
+        //Read all data from metadata block
+        assertThat(client.readDataString(blockE), is(simpleText + otherText));
 
     }
 

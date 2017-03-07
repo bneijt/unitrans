@@ -168,4 +168,18 @@ public class TestClient {
 
 
     }
+
+    /** Read the complete data block as a string
+     *
+     * @param metadataBlock
+     * @return
+     */
+    public String readDataString(UUID metadataBlock) throws UnirestException, IOException {
+        HttpResponse<InputStream> response = Unirest
+                .get(baseUrl + "api/data/" + session.toString()
+                        + "/" + metadataBlock.toString()
+                ).asBinary();
+        assertThat(response.getStatus(), is(Response.Status.OK.getStatusCode()));
+        return CharStreams.toString(new InputStreamReader(response.getBody(), Charsets.UTF_8));
+    }
 }

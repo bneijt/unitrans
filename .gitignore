@@ -1,5 +1,4 @@
 /.idea
-/*.iml
-/target
-/dependency-reduced-pom.xml
-/keys
+*.iml
+/*/target
+/server/dependency-reduced-pom.xml

@@ -99,4 +99,35 @@ public class DataResource {
         }
         return JsonResponse.unauthorized("Could not reach data block");
     }
+
+    @GET
+    @Path("{sessionId}/{metadataId}")
+    public Response getAllBlock(@PathParam("sessionId") String sessionId,
+                             @PathParam("metadataId") String metadataId) throws IOException {
+        UUID metaIdent = UUID.fromString(metadataId);
+        UUID sessionIdent = UUID.fromString(sessionId);
+        Session session = sessionService.get(sessionIdent).get();
+        LOGGER.info("Request for all data behind metablock {}", metaIdent);
+
+        if (metadataService.reachableFrom(session.rootBlock, metaIdent)) {
+            MetadataBlock metadataBlock = metadataService.get(metaIdent);
+            //Data must be part of metadata block
+
+            StreamingOutput stream = new StreamingOutput() {
+                @Override
+                public void write(OutputStream os) throws IOException,
+                        WebApplicationException {
+                    for (String datablockId : metadataBlock.datas) {
+                        try(InputStream blockInputStream = blockService.open(datablockId)) {
+                            ByteStreams.copy(blockInputStream, os);
+                        } finally {
+                            os.flush();
+                        }
+                    }
+                }
+            };
+            return Response.ok(stream).type(MediaType.APPLICATION_OCTET_STREAM).build();
+        }
+        return JsonResponse.unauthorized("Could not reach data block");
+    }
 }

@@ -7,7 +7,11 @@
     <artifactId>server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <description>Unitrans server</description>
-
+    <parent>
+        <groupId>nl.bneijt.unitrans</groupId>
+        <artifactId>unitrans</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -30,9 +34,9 @@
             <version>3.1.1</version>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.neo4j.driver</groupId>-->
-            <!--<artifactId>neo4j-java-driver</artifactId>-->
-            <!--<version>1.1.2</version>-->
+        <!--<groupId>org.neo4j.driver</groupId>-->
+        <!--<artifactId>neo4j-java-driver</artifactId>-->
+        <!--<version>1.1.2</version>-->
         <!--</dependency>-->
 
 
@@ -199,15 +203,6 @@
                             </excludes>
                         </filter>
                     </filters>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.0</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
                 </configuration>
             </plugin>
             <plugin>
