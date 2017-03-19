@@ -7,10 +7,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import nl.bneijt.unitrans.metadata.elements.MetadataBlock;
 import nl.bneijt.unitrans.metadata.elements.User;
-
-
 import org.mindrot.jbcrypt.BCrypt;
-import org.neo4j.graphalgo.impl.util.PathImpl;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.IndexDefinition;
@@ -124,8 +121,10 @@ public class Neo4JStorage {
 
     }
 
-    /** List all paths from a to b
+    /**
+     * List all paths from a to b
      * Current maximum depth is 1024 elements!
+     *
      * @param a
      * @param b
      * @return list of possible paths from a to b
